@@ -131,7 +131,7 @@ Xbe::Xbe(const char *x_szFilename)
 
         setlocale( LC_ALL, "English" );
 
-        wcstombs(m_szAsciiTitle, m_Certificate.wszTitleName, 40);
+        //wcstombs(m_szAsciiTitle, m_Certificate.wszTitleName, 40);
 
         printf("OK\n");
 
@@ -507,7 +507,11 @@ Xbe::Xbe(class Exe *x_Exe, const char *x_szTitle, bool x_bRetail)
 
             // title name
             memset(m_Certificate.wszTitleName, 0, 40);
-            mbstowcs(m_Certificate.wszTitleName, x_szTitle, 40);
+            int i;
+            for(i = 0; i < 40; i++) {
+              //mbstowcs(m_Certificate.wszTitleName, x_szTitle, 40);
+                m_Certificate.wszTitleName[i] = x_szTitle[i];
+            }
 
             // zero out alternate ids
             {
@@ -553,7 +557,11 @@ Xbe::Xbe(class Exe *x_Exe, const char *x_szTitle, bool x_bRetail)
 
         // generate ascii title from certificate title name
         setlocale( LC_ALL, "English" );
-        wcstombs(m_szAsciiTitle, m_Certificate.wszTitleName, 40);
+          int i;
+          for(i = 0; i < 40; i++) {
+            //mbstowcs(m_Certificate.wszTitleName, x_szTitle, 40);
+              m_szAsciiTitle[i] = m_Certificate.wszTitleName[i];
+          }
 
         // write section headers / section names
         {
@@ -567,7 +575,7 @@ Xbe::Xbe(class Exe *x_Exe, const char *x_szTitle, bool x_bRetail)
             uint16 *htrc = (uint16*)(szBuffer + m_Header.dwSections*sizeof(*m_SectionHeader));
 
             // section write buffer
-            char *secn = (char*)((uint32)htrc + (m_Header.dwSections+1)*2);
+            char *secn = (char*)((uintptr_t)htrc + (m_Header.dwSections+1)*2);
 
             // head/tail reference count write cursor
             uint32 hwc_htrc = hwc + m_Header.dwSections*sizeof(*m_SectionHeader);
@@ -603,14 +611,15 @@ Xbe::Xbe(class Exe *x_Exe, const char *x_szTitle, bool x_bRetail)
 
                 // calculate sizeof_raw by locating the last non-zero value in the raw section data
                 {
-                    uint32 r = x_Exe->m_SectionHeader[v].m_sizeof_raw - 1;
-
-                    while(r > 0)
-                    {
-                        if(x_Exe->m_bzSection[v][r--] != 0)
-                            break;
+                    uint32 r = x_Exe->m_SectionHeader[v].m_sizeof_raw;
+                    if (r > 0) {
+                      r--;
+                      while(r > 0)
+                      {
+                          if(x_Exe->m_bzSection[v][r--] != 0)
+                              break;
+                      }
                     }
-                    
                     // word aligned
                     m_SectionHeader[v].dwSizeofRaw = RoundUp(r+2, 4);
                 }
@@ -1047,7 +1056,10 @@ void Xbe::DumpInformation(FILE *x_file)
     fprintf(x_file, "Size of Headers                  : 0x%.08X\n", m_Header.dwSizeofHeaders);
     fprintf(x_file, "Size of Image                    : 0x%.08X\n", m_Header.dwSizeofImage);
     fprintf(x_file, "Size of Image Header             : 0x%.08X\n", m_Header.dwSizeofImageHeader);
-    fprintf(x_file, "TimeDate Stamp                   : 0x%.08X (%s)\n", m_Header.dwTimeDate, BetterTime(ctime((const long*)&m_Header.dwTimeDate)));
+{
+time_t tmpt = (time_t)m_Header.dwTimeDate;
+    fprintf(x_file, "TimeDate Stamp                   : 0x%.08X (%s)\n", m_Header.dwTimeDate, BetterTime(ctime(&tmpt)));
+}
     fprintf(x_file, "Certificate Address              : 0x%.08X\n", m_Header.dwCertificateAddr);
     fprintf(x_file, "Number of Sections               : 0x%.08X\n", m_Header.dwSections);
     fprintf(x_file, "Section Headers Address          : 0x%.08X\n", m_Header.dwSectionHeadersAddr);
@@ -1076,7 +1088,8 @@ void Xbe::DumpInformation(FILE *x_file)
     setlocale( LC_ALL, "English" );
 
     const wchar_t *wszFilename = (const wchar_t *)GetAddr(m_Header.dwDebugUnicodeFilenameAddr);
-
+wszFilename = NULL;
+   
     if(wszFilename != NULL)
         wcstombs(AsciiFilename, wszFilename, 40);
     else
@@ -1090,7 +1103,10 @@ void Xbe::DumpInformation(FILE *x_file)
     fprintf(x_file, "(PE) Base Address                : 0x%.08X\n", m_Header.dwPeBaseAddr);
     fprintf(x_file, "(PE) Size of Image               : 0x%.08X\n", m_Header.dwPeSizeofImage);
     fprintf(x_file, "(PE) Checksum                    : 0x%.08X\n", m_Header.dwPeChecksum);
-    fprintf(x_file, "(PE) TimeDate Stamp              : 0x%.08X (%s)\n", m_Header.dwPeTimeDate, BetterTime(ctime((time_t*)&m_Header.dwPeTimeDate)));
+{
+    time_t tmpt = (time_t)m_Header.dwPeTimeDate;
+    fprintf(x_file, "(PE) TimeDate Stamp              : 0x%.08X (%s)\n", m_Header.dwPeTimeDate, BetterTime(ctime(&tmpt)));
+}
     fprintf(x_file, "Debug Pathname Address           : 0x%.08X (\"%s\")\n", m_Header.dwDebugPathnameAddr, GetAddr(m_Header.dwDebugPathnameAddr));
     fprintf(x_file, "Debug Filename Address           : 0x%.08X (\"%s\")\n", m_Header.dwDebugFilenameAddr, GetAddr(m_Header.dwDebugFilenameAddr));
     fprintf(x_file, "Debug Unicode filename Address   : 0x%.08X (L\"%s\")\n", m_Header.dwDebugUnicodeFilenameAddr, AsciiFilename);
@@ -1106,7 +1122,10 @@ void Xbe::DumpInformation(FILE *x_file)
     fprintf(x_file, "Dumping XBE Certificate...\n");
     fprintf(x_file, "\n");
     fprintf(x_file, "Size of Certificate              : 0x%.08X\n", m_Certificate.dwSize);
-    fprintf(x_file, "TimeDate Stamp                   : 0x%.08X (%s)\n", m_Certificate.dwTimeDate, BetterTime(ctime((time_t*)&m_Certificate.dwTimeDate)));
+{
+    time_t tmpt = (time_t)m_Certificate.dwTimeDate;
+    fprintf(x_file, "TimeDate Stamp                   : 0x%.08X (%s)\n", m_Certificate.dwTimeDate, BetterTime(ctime(&tmpt)));
+}
     fprintf(x_file, "Title ID                         : 0x%.08X\n", m_Certificate.dwTitleId);
     fprintf(x_file, "Title                            : L\"%s\"\n", m_szAsciiTitle);
 

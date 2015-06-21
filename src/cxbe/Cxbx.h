@@ -41,18 +41,20 @@
 #define CXBXKRNL_API __declspec(dllexport)
 #endif
 
+#include <stdint.h>
+
 // Caustik's favorite typedefs
 typedef signed int     sint;
 typedef unsigned int   uint;
-typedef char           int08;
-typedef short          int16;
-typedef long           int32;
-typedef unsigned char  uint08;
-typedef unsigned short uint16;
-typedef unsigned long  uint32;
-typedef signed char    sint08;
-typedef signed short   sint16;
-typedef signed long    sint32;
+typedef int8_t           int08;
+typedef int16_t          int16;
+typedef int32_t           int32;
+typedef uint8_t  uint08;
+typedef uint16_t uint16;
+typedef uint32_t  uint32;
+typedef int8_t   sint08;
+typedef int16_t   sint16;
+typedef int32_t    sint32;
 
 // define this to track resources for debugging purposes
 //#define _DEBUG_TRACK_VB // Vertex Buffers

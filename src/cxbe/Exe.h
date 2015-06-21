@@ -141,7 +141,7 @@ class Exe : public Error
         #include "AlignPrefix1.h"
         struct SectionHeader
         {
-            char   m_name[8];                       // name of section
+            uint08 m_name[8];                       // name of section
             uint32 m_virtual_size;                  // virtual size of segment
             uint32 m_virtual_addr;                  // virtual address of segment
             uint32 m_sizeof_raw;                    // size of raw data
