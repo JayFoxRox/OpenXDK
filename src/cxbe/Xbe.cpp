@@ -793,25 +793,17 @@ Xbe::Xbe(class Exe *x_Exe, const char *x_szTitle, bool x_bRetail)
 
         // locate kernel thunk table
         {
-            // unfortunately, GCC doesn't populate the IAT entry in the data directory
-            // so if the value is 0, then it could mean there are no imports, or it
-            // could mean the EXE was compiled by GCC
-            uint32 ktRVA = x_Exe->m_OptionalHeader.m_image_data_directory[12].m_virtual_addr;
+            // lets check to see if there is an import section. if so, look at offset 16
+            // for the RVA of the Import Address Table
+            uint32 importRVA = x_Exe->m_OptionalHeader.m_image_data_directory[1].m_virtual_addr;
 
-            if(ktRVA == 0)
-            {
-                // lets check to see if there is an import section. if so, look at offset 16
-                // for the RVA of the Import Address Table
-                uint32 importRVA = x_Exe->m_OptionalHeader.m_image_data_directory[1].m_virtual_addr;
-
-                if(importRVA != 0)
-                {
-                    uint08 *importSection = GetAddr(importRVA + m_Header.dwPeBaseAddr);
-
-                    ktRVA = *(uint32 *)&importSection[16];
-                }
+            if(importRVA == 0) {
+                SetError("IAT not found", true);
+                goto cleanup;
             }
 
+            uint08 *importSection = GetAddr(importRVA + m_Header.dwPeBaseAddr);
+            uint32 ktRVA = *(uint32 *)&importSection[16];
             uint32 kt = ktRVA + m_Header.dwPeBaseAddr;
 
             kt ^= (x_bRetail ? XOR_KT_RETAIL : XOR_KT_DEBUG );
