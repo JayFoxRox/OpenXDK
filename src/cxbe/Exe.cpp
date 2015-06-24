@@ -86,11 +86,6 @@ Exe::Exe(const char *x_szFilename)
 
     // read PE header
     {
-
-printf("1=%i=%i=%i\n",sizeof(int08),sizeof(uint08),sizeof(sint08));
-printf("2=%i=%i=%i\n",sizeof(int16),sizeof(uint16),sizeof(sint16));
-printf("4=%i=%i=%i\n",sizeof(int32),sizeof(uint32),sizeof(sint32));
-
         printf("Exe::Exe: Reading PE header... (%i bytes)",sizeof(m_Header));
 
         if(fread(&m_Header, sizeof(m_Header), 1, ExeFile) != 1)
